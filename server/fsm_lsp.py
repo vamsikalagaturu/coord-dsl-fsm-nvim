@@ -22,11 +22,7 @@ def _load_metamodel():
         from textx import metamodel_from_file
         from textx.exceptions import TextXError
 
-        mm = metamodel_from_file(
-            str(GRAMMAR_DIR / "fsm.tx"),
-            grammar_classes=None,
-            auto_init_attributes=True,
-        )
+        mm = metamodel_from_file(str(GRAMMAR_DIR / "fsm.tx"))
         return mm, TextXError
     except ImportError:
         logger.warning("textX not installed; diagnostic support disabled")
