@@ -10,7 +10,10 @@ function M.setup()
   local ok, parsers = pcall(require, "nvim-treesitter.parsers")
   if ok then
     local root = plugin_root()
-    parsers.get_parser_configs().fsm = {
+    local configs = type(parsers.get_parser_configs) == "function"
+      and parsers.get_parser_configs()
+      or parsers
+    configs.fsm = {
       install_info = {
         url = root,
         files = { "src/parser.c" },
