@@ -81,8 +81,8 @@ def did_open(ls: LanguageServer, params: types.DidOpenTextDocumentParams) -> Non
 
 @server.feature(types.TEXT_DOCUMENT_DID_CHANGE)
 def did_change(ls: LanguageServer, params: types.DidChangeTextDocumentParams) -> None:
-    source = params.content_changes[-1].text
-    _publish(ls, params.text_document.uri, source)
+    doc = ls.workspace.get_text_document(params.text_document.uri)
+    _publish(ls, params.text_document.uri, doc.source)
 
 
 @server.feature(types.TEXT_DOCUMENT_DID_SAVE)
