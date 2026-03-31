@@ -1,0 +1,3 @@
+[submodule "deps/coord-dsl"]
+	path = deps/coord-dsl
+	url = https://github.com/secorolab/coord-dsl.git

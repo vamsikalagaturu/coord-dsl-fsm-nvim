@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -e
 PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Ensure the coord-dsl grammar submodule is present
+git -C "$PLUGIN_DIR" submodule update --init --recursive 2>/dev/null || true
 VENV="$PLUGIN_DIR/.venv"
 REQS="$PLUGIN_DIR/server/requirements.txt"
 

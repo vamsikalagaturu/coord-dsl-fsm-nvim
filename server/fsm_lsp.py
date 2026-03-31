@@ -9,7 +9,11 @@ from pathlib import Path
 from lsprotocol import types
 from pygls.lsp.server import LanguageServer
 
-GRAMMAR_DIR = Path(__file__).parent / "grammar"
+_PLUGIN_ROOT = Path(__file__).parent.parent
+# Prefer the submodule grammar; fall back to the bundled copy
+_SUBMODULE_GRAMMAR = _PLUGIN_ROOT / "deps" / "coord-dsl" / "src" / "coord_dsl" / "metamodels"
+_BUNDLED_GRAMMAR = Path(__file__).parent / "grammar"
+GRAMMAR_DIR = _SUBMODULE_GRAMMAR if _SUBMODULE_GRAMMAR.exists() else _BUNDLED_GRAMMAR
 
 logger = logging.getLogger(__name__)
 

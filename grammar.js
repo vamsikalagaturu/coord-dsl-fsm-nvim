@@ -9,19 +9,21 @@ module.exports = grammar({
   extras: ($) => [/\s+/, $.comment],
 
   rules: {
-    source_file: ($) =>
-      seq(repeat($.namespace_decl), optional($.fsm_definition)),
+    source_file: ($) => optional($.fsm_definition),
 
-    comment: (_) => /\/\/.*/,
-
-    namespace_decl: ($) =>
-      seq("ns", field("name", $.identifier), "=", field("uri", $.string)),
+    comment: (_) =>
+      token(
+        choice(
+          /\/\/.*/,
+          seq("/*", /[^*]*\*+([^/*][^*]*\*+)*/, "/"),
+        ),
+      ),
 
     fsm_definition: ($) =>
       seq(
         "NAME",
         ":",
-        field("name", $.qualified_name),
+        field("name", $.identifier),
         optional($.description_clause),
         $.states_clause,
         $.start_state_clause,
@@ -51,16 +53,6 @@ module.exports = grammar({
 
     identifier_list: ($) =>
       seq($.identifier, repeat(seq(",", $.identifier))),
-
-    qualified_name: ($) =>
-      seq(
-        "(",
-        "ns",
-        "=",
-        field("namespace", $.identifier),
-        ")",
-        field("local", $.identifier),
-      ),
 
     reference: ($) => seq("@", $.identifier),
 
