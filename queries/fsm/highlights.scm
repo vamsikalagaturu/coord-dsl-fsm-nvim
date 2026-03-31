@@ -29,30 +29,21 @@
 (reference "@" @operator)
 (reference (identifier) @variable.member)
 
-; Namespace declaration
-(namespace_decl
-  name: (identifier) @module)
+; Namespace declarations
+(namespace_decl name: (identifier) @module)
 
-; FSM qualified name
-(qualified_name
-  namespace: (identifier) @module)
-(qualified_name
-  local: (identifier) @type)
+; FSM qualified name - namespace part (optional)
+(qualified_name namespace: (identifier) @module)
+(qualified_name local: (identifier) @type)
 
-; State declarations (in STATES list)
-(states_clause
-  (identifier_list
-    (identifier) @type))
+; State declarations
+(states_clause (identifier_list (identifier) @type))
 
-; Event declarations (in EVENTS list)
-(events_clause
-  (identifier_list
-    (identifier) @variable))
+; Event declarations
+(events_clause (identifier_list (identifier) @variable))
 
 ; Transition definition name
-(transition_def
-  name: (identifier) @function)
+(transition_def name: (identifier) @function)
 
 ; Reaction definition name
-(reaction_def
-  name: (identifier) @function)
+(reaction_def name: (identifier) @function)

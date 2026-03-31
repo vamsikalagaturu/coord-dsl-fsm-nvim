@@ -1,21 +1,18 @@
 # fsm-nvim
 
-Neovim plugin for the [coord-dsl](https://github.com/vamsikalagaturu/coord-dsl) TextX FSM DSL (`.fsm` files).
+Neovim plugin for the [coord-dsl](https://github.com/secorolab/coord-dsl) TextX FSM DSL (`.fsm` files).
 
 Provides:
 - Syntax highlighting via tree-sitter (with vim regex fallback)
-- LSP diagnostics, hover docs via a bundled Python language server
+- LSP diagnostics and hover docs via a bundled Python language server
 
 ## Requirements
 
 - Neovim >= 0.10 (0.11+ recommended for native `vim.lsp.config`)
-- Python 3.7+ with `pygls >= 2.0` and `textX >= 4.1` in the active environment
+- Python 3.10+
 - [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) (optional, for tree-sitter highlighting)
 
-Install Python dependencies:
-```sh
-pip install pygls textX
-```
+Python dependencies (`pygls`, `textX`) are installed automatically into a plugin-local virtualenv on first use.
 
 ## Installation
 
@@ -25,53 +22,45 @@ pip install pygls textX
 {
   "vamsikalagaturu/coord-dsl-fsm-nvim",
   ft = "fsm",
+  dependencies = { "nvim-treesitter/nvim-treesitter" },
   config = function()
     require("fsm-nvim").setup()
   end,
 }
 ```
 
-To point at a specific Python executable:
-```lua
-require("fsm-nvim").setup({
-  python = "/path/to/.venv/bin/python3",
-})
-```
-
-### Tree-sitter parser
-
-After installing the plugin, run `:TSInstall fsm` once to compile the parser.
+Run `:TSInstall fsm` once to compile the tree-sitter parser.
 
 ## Configuration
 
 ```lua
 require("fsm-nvim").setup({
-  -- python executable that has pygls + textX installed (auto-detected if nil)
+  -- python executable with pygls + textX (auto-detected if nil)
   python = nil,
+
+  -- path to a coord-dsl repo root (local fork or clone)
+  -- uses the bundled submodule (secorolab/coord-dsl) if nil
+  grammar_path = nil,
 
   -- register FSM parser with nvim-treesitter (default: true)
   enable_treesitter = true,
 
   -- start the FSM language server (default: true)
   enable_lsp = true,
-
-  -- extra opts forwarded to lspconfig.fsm_ls.setup() on Neovim < 0.11
-  lspconfig = {},
 })
 ```
 
-## LSP features
+### Using a local or forked coord-dsl
 
-| Feature | Status |
-|---------|--------|
-| Diagnostics (syntax errors) | yes |
-| Hover documentation | yes (keywords) |
-| Go-to-definition | planned |
-| Completion | planned |
+```lua
+require("fsm-nvim").setup({
+  grammar_path = "/path/to/your/coord-dsl",
+})
+```
 
-## Syntax highlighting groups
+The plugin expects `<grammar_path>/src/coord_dsl/metamodels/fsm.tx` to exist.
 
-The tree-sitter highlights map to standard Neovim capture names:
+## Syntax highlighting
 
 | Construct | Capture |
 |-----------|---------|
@@ -88,4 +77,4 @@ The tree-sitter highlights map to standard Neovim capture names:
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE)

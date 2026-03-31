@@ -9,7 +9,8 @@ module.exports = grammar({
   extras: ($) => [/\s+/, $.comment],
 
   rules: {
-    source_file: ($) => optional($.fsm_definition),
+    source_file: ($) =>
+      seq(repeat($.namespace_decl), optional($.fsm_definition)),
 
     comment: (_) =>
       token(
@@ -19,11 +20,14 @@ module.exports = grammar({
         ),
       ),
 
+    namespace_decl: ($) =>
+      seq("ns", field("name", $.identifier), "=", field("uri", $.string)),
+
     fsm_definition: ($) =>
       seq(
         "NAME",
         ":",
-        field("name", $.identifier),
+        field("name", $.qualified_name),
         optional($.description_clause),
         $.states_clause,
         $.start_state_clause,
@@ -53,6 +57,15 @@ module.exports = grammar({
 
     identifier_list: ($) =>
       seq($.identifier, repeat(seq(",", $.identifier))),
+
+    // (ns=<namespace>)<local> or just <local>
+    qualified_name: ($) =>
+      seq(
+        optional(
+          seq("(", "ns", "=", field("namespace", $.identifier), ")"),
+        ),
+        field("local", $.identifier),
+      ),
 
     reference: ($) => seq("@", $.identifier),
 

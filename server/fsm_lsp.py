@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Language server for the TextX FSM DSL (.fsm files)."""
 
+import argparse
 import logging
 import re
 import sys
@@ -10,23 +11,30 @@ from lsprotocol import types
 from pygls.lsp.server import LanguageServer
 
 _PLUGIN_ROOT = Path(__file__).parent.parent
-# Prefer the submodule grammar; fall back to the bundled copy
 _SUBMODULE_GRAMMAR = _PLUGIN_ROOT / "deps" / "coord-dsl" / "src" / "coord_dsl" / "metamodels"
 _BUNDLED_GRAMMAR = Path(__file__).parent / "grammar"
-GRAMMAR_DIR = _SUBMODULE_GRAMMAR if _SUBMODULE_GRAMMAR.exists() else _BUNDLED_GRAMMAR
 
 logger = logging.getLogger(__name__)
 
-server = LanguageServer("fsm-ls", "v0.1.0")
+
+def _resolve_grammar_dir(user_path: str | None) -> Path:
+    if user_path:
+        p = Path(user_path) / "src" / "coord_dsl" / "metamodels"
+        if p.exists():
+            return p
+        raise FileNotFoundError(f"grammar not found at {p}")
+    if _SUBMODULE_GRAMMAR.exists():
+        return _SUBMODULE_GRAMMAR
+    return _BUNDLED_GRAMMAR
 
 
-def _load_metamodel():
-    """Load the FSM TextX metamodel. Returns None if textX is not available."""
+def _load_metamodel(grammar_dir: Path):
+    """Load the FSM TextX metamodel. Returns (None, None) if textX is not available."""
     try:
         from textx import metamodel_from_file
         from textx.exceptions import TextXError
 
-        mm = metamodel_from_file(str(GRAMMAR_DIR / "fsm.tx"))
+        mm = metamodel_from_file(str(grammar_dir / "fsm.tx"))
         return mm, TextXError
     except ImportError:
         logger.warning("textX not installed; diagnostic support disabled")
@@ -36,26 +44,26 @@ def _load_metamodel():
         return None, None
 
 
-_METAMODEL, _TextXError = _load_metamodel()
+# Populated in __main__ after args are parsed.
+_METAMODEL = None
+_TextXError = None
+
+server = LanguageServer("fsm-ls", "v0.1.0")
 
 
 def _parse_and_diagnose(uri: str, source: str) -> list[types.Diagnostic]:
-    """Parse source text and return LSP diagnostics for any errors."""
     diagnostics: list[types.Diagnostic] = []
-
     if _METAMODEL is None:
         return diagnostics
-
     try:
         _METAMODEL.model_from_str(source, file_name=uri)
     except Exception as exc:
-        # TextXSyntaxError and TextXSemanticError carry line/col attributes.
         line = getattr(exc, "line", 1) or 1
         col = getattr(exc, "col", 1) or 1
         message = str(exc)
-        # Strip the redundant "line N, col M" prefix that textX already embeds.
         message = re.sub(r"^\s*\(line \d+, col \d+\):?\s*", "", message)
-
+        # Also strip the "path:line:col:" prefix textX includes in the message
+        message = re.sub(r"^[^:]+:\d+:\d+:\s*", "", message)
         diagnostics.append(
             types.Diagnostic(
                 range=types.Range(
@@ -67,14 +75,12 @@ def _parse_and_diagnose(uri: str, source: str) -> list[types.Diagnostic]:
                 source="fsm-ls",
             )
         )
-
     return diagnostics
 
 
 def _publish(ls: LanguageServer, uri: str, source: str) -> None:
-    diagnostics = _parse_and_diagnose(uri, source)
     ls.text_document_publish_diagnostics(
-        types.PublishDiagnosticsParams(uri=uri, diagnostics=diagnostics)
+        types.PublishDiagnosticsParams(uri=uri, diagnostics=_parse_and_diagnose(uri, source))
     )
 
 
@@ -95,13 +101,8 @@ def did_save(ls: LanguageServer, params: types.DidSaveTextDocumentParams) -> Non
     _publish(ls, params.text_document.uri, doc.source)
 
 
-@server.feature(
-    types.TEXT_DOCUMENT_HOVER,
-    types.HoverOptions(),
-)
-def hover(
-    ls: LanguageServer, params: types.HoverParams
-) -> types.Hover | None:
+@server.feature(types.TEXT_DOCUMENT_HOVER, types.HoverOptions())
+def hover(ls: LanguageServer, params: types.HoverParams) -> types.Hover | None:
     doc = ls.workspace.get_text_document(params.text_document.uri)
     word = _word_at(doc.source, params.position.line, params.position.character)
     info = _HOVER_DOCS.get(word)
@@ -113,7 +114,7 @@ def hover(
 
 
 _HOVER_DOCS: dict[str, str] = {
-    "NAME": "**NAME** `:` `(ns=<namespace>)<local>`\n\nFully qualified name of this FSM.",
+    "NAME": "**NAME** `:` `[(ns=<namespace>)]<local>`\n\nName of this FSM, optionally namespace-qualified.",
     "DESCRIPTION": "**DESCRIPTION** `:` `\"<text>\"`\n\nOptional human-readable description.",
     "STATES": "**STATES** `:` `S1, S2, ...`\n\nComma-separated list of state identifiers.",
     "START_STATE": "**START_STATE** `:` `@<state>`\n\nInitial state when the FSM is created.",
@@ -132,18 +133,15 @@ _HOVER_DOCS: dict[str, str] = {
 
 
 def _word_at(source: str, line: int, character: int) -> str:
-    """Extract the word (identifier or keyword) at the given position."""
     lines = source.splitlines()
     if line >= len(lines):
         return ""
     text = lines[line]
     if character >= len(text):
         return ""
-    # Expand left
     start = character
     while start > 0 and re.match(r"[A-Za-z0-9_]", text[start - 1]):
         start -= 1
-    # Expand right
     end = character
     while end < len(text) and re.match(r"[A-Za-z0-9_]", text[end]):
         end += 1
@@ -156,4 +154,20 @@ if __name__ == "__main__":
         stream=sys.stderr,
         format="%(levelname)s %(name)s: %(message)s",
     )
+
+    ap = argparse.ArgumentParser(description="FSM language server")
+    ap.add_argument(
+        "--grammar-path",
+        default=None,
+        help="Path to a coord-dsl repo root (overrides submodule/bundled grammar)",
+    )
+    args = ap.parse_args()
+
+    try:
+        grammar_dir = _resolve_grammar_dir(args.grammar_path)
+    except FileNotFoundError as e:
+        logging.error("fsm-ls: %s", e)
+        sys.exit(1)
+
+    _METAMODEL, _TextXError = _load_metamodel(grammar_dir)
     server.start_io()
