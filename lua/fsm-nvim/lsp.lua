@@ -10,17 +10,15 @@ local function find_python(hint)
   if hint then
     table.insert(candidates, hint)
   end
-  -- Prefer a venv python in common project-root locations
-  local cwd = vim.fn.getcwd()
-  for _, rel in ipairs({ ".venv/bin/python3", "venv/bin/python3" }) do
-    table.insert(candidates, cwd .. "/" .. rel)
-  end
+  -- Prefer the plugin-local venv created by build.sh
+  local root = plugin_root()
+  table.insert(candidates, root .. "/.venv/bin/python3")
+  -- Fallback to system python
   table.insert(candidates, "python3")
   table.insert(candidates, "python")
 
   for _, cmd in ipairs(candidates) do
     if vim.fn.executable(cmd) == 1 then
-      -- Quick check: can we import pygls?
       local result = vim.fn.system({ cmd, "-c", "import pygls.lsp.server" })
       if vim.v.shell_error == 0 then
         return cmd

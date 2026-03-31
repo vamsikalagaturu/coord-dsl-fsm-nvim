@@ -12,11 +12,15 @@ INVALID_FSM = ROOT / "test" / "fixtures" / "invalid.fsm"
 GRAMMAR_DIR = ROOT / "server" / "grammar"
 SRC_DIR = ROOT / "src"
 
+# Prefer the plugin-local venv created by build.sh
+_local_venv_py = ROOT / ".venv" / "bin" / "python3"
+PYTHON = str(_local_venv_py) if _local_venv_py.exists() else sys.executable
+
 
 def test_server_imports():
     """Server script must import without errors."""
     result = subprocess.run(
-        [sys.executable, str(SERVER), "--help"],
+        [PYTHON, str(SERVER), "--help"],
         capture_output=True, text=True,
         timeout=5,
     )
@@ -30,7 +34,7 @@ def test_server_imports():
 def test_grammar_loads():
     """TextX metamodel must load from bundled grammar files."""
     result = subprocess.run(
-        [sys.executable, "-c",
+        [PYTHON, "-c",
          f"from textx import metamodel_from_file; "
          f"mm = metamodel_from_file(r'{GRAMMAR_DIR}/fsm.tx'); "
          f"print('metamodel loaded')"],
@@ -44,7 +48,7 @@ def test_grammar_loads():
 def test_valid_fsm_parses():
     """Valid fixture must parse without errors."""
     result = subprocess.run(
-        [sys.executable, "-c",
+        [PYTHON, "-c",
          f"from textx import metamodel_from_file; "
          f"mm = metamodel_from_file(r'{GRAMMAR_DIR}/fsm.tx'); "
          f"mm.model_from_file(r'{VALID_FSM}'); "
@@ -59,7 +63,7 @@ def test_valid_fsm_parses():
 def test_invalid_fsm_raises():
     """Invalid fixture must raise a TextX exception."""
     result = subprocess.run(
-        [sys.executable, "-c",
+        [PYTHON, "-c",
          f"from textx import metamodel_from_file; "
          f"from textx.exceptions import TextXError; "
          f"mm = metamodel_from_file(r'{GRAMMAR_DIR}/fsm.tx'); "
