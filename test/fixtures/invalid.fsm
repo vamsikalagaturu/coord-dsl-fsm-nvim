@@ -1,0 +1,22 @@
+ns hello="https://example.com/hello"
+
+NAME: (ns=hello)example
+
+STATES: S_START, S_END
+
+START_STATE: @S_START
+CURRENT_STATE: @S_START
+END_STATE: @S_END
+
+EVENTS: E_GO
+
+TRANSITIONS:
+    T_GO:
+        FROM: @S_START
+        TO: @UNKNOWN_STATE
+
+REACTIONS:
+    R_GO:
+        WHEN: @E_GO
+        DO: @T_GO
+        FIRES @E_MISSING_COLON

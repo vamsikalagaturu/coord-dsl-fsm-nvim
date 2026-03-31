@@ -1,0 +1,21 @@
+{
+  "name": "tree-sitter-fsm",
+  "version": "0.1.0",
+  "description": "Tree-sitter grammar for the TextX FSM DSL (coord-dsl)",
+  "main": "bindings/node",
+  "scripts": {
+    "build": "tree-sitter generate",
+    "test": "tree-sitter test"
+  },
+  "tree-sitter": [
+    {
+      "scope": "source.fsm",
+      "file-types": ["fsm"],
+      "highlights": "queries/fsm/highlights.scm"
+    }
+  ],
+  "devDependencies": {
+    "tree-sitter-cli": "^0.25.0"
+  },
+  "license": "MIT"
+}

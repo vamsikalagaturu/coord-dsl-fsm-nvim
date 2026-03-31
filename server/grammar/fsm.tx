@@ -1,0 +1,42 @@
+import base
+
+FSM:
+    namespaces=NamespaceDeclare*
+	"NAME" ":" name=Name
+    (
+		"DESCRIPTION" ":" description=STRING
+	)?
+	"STATES"        ":" states+=State[',']
+	"START_STATE"   ":" "@"start_state=[State]
+	"CURRENT_STATE" ":" "@"current_state=[State]
+	"END_STATE"     ":" "@"end_state=[State]
+	"EVENTS"        ":" events+=Event[',']
+	"TRANSITIONS"   ":" transitions+=Transition
+	"REACTIONS"     ":" reactions+=Reaction
+;
+
+Name:
+    "(" "ns" "=" ns=[NamespaceDeclare|FQN] ")" local=IRI_TRUNK
+;
+
+State:
+	name=ID
+;
+
+Event:
+    name=ID
+;
+
+Transition:
+	name=ID ":"
+		"FROM"  ":" "@"from_state=[State]
+		"TO"    ":" "@"to_state=[State]
+;
+
+Reaction:
+	name=ID ":"
+		"WHEN"   ":" "@"when=[Event]
+		"DO"     ":" "@"do=[Transition]
+		("FIRES" ":" "@"fires=[Event] ("," "@"fires+=[Event])*)?
+;
+
