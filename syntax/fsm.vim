@@ -6,7 +6,7 @@ if exists('b:current_syntax')
 endif
 
 " Section-level keywords
-syntax keyword fsmSection NAME DESCRIPTION STATES START_STATE CURRENT_STATE
+syntax keyword fsmSection FSM DESCRIPTION STATES START_STATE
 syntax keyword fsmSection END_STATE EVENTS TRANSITIONS REACTIONS
 
 " Clause keywords inside transition/reaction blocks

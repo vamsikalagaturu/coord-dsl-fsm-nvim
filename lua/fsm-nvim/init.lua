@@ -4,14 +4,12 @@ local M = {}
 ---@field enable_lsp boolean Enable the FSM language server (default: true)
 ---@field enable_treesitter boolean Register the FSM parser with nvim-treesitter (default: true)
 ---@field python string|nil Path to a python executable that has pygls installed (auto-detected if nil)
----@field grammar_path string|nil Path to a coord-dsl repo (local fork or clone). Uses bundled submodule if nil.
 ---@field lspconfig table|nil Extra options forwarded to lspconfig.fsm_ls.setup() when using nvim-lspconfig
 
 M.config = {
   enable_lsp = true,
   enable_treesitter = true,
   python = nil,
-  grammar_path = nil,
   lspconfig = {},
 }
 

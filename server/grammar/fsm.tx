@@ -1,42 +1,46 @@
-import base
-
-FSM:
-    namespaces=NamespaceDeclare*
-	"NAME" ":" name=Name
-    (
-		"DESCRIPTION" ":" description=STRING
-	)?
-	"STATES"        ":" states+=State[',']
-	"START_STATE"   ":" "@"start_state=[State]
-	"CURRENT_STATE" ":" "@"current_state=[State]
-	"END_STATE"     ":" "@"end_state=[State]
-	"EVENTS"        ":" events+=Event[',']
-	"TRANSITIONS"   ":" transitions+=Transition
-	"REACTIONS"     ":" reactions+=Reaction
+Model:
+    namespaces*=NamespaceDeclare
+    fsm=FSM
 ;
 
-Name:
-    "(" "ns" "=" ns=[NamespaceDeclare|FQN] ")" local=IRI_TRUNK
+FSM:
+    "FSM" "(" "ns" "=" ns=[NamespaceDeclare|FQN] ")" name=IRI_TRUNK "{"
+        ("DESCRIPTION" ":" description=STRING)?
+        "STATES"      ":" states+=State[","]
+        "START_STATE" ":" "@" start_state=[State|IRI_TRUNK]
+        "END_STATE"   ":" "@" end_state=[State|IRI_TRUNK]
+        "EVENTS"      ":" events+=Event[","]
+        "TRANSITIONS" ":" transitions+=Transition
+        "REACTIONS"   ":" reactions+=Reaction
+    "}"
 ;
 
 State:
-	name=ID
+    name=IRI_TRUNK
 ;
 
 Event:
-    name=ID
+    name=IRI_TRUNK
 ;
 
 Transition:
-	name=ID ":"
-		"FROM"  ":" "@"from_state=[State]
-		"TO"    ":" "@"to_state=[State]
+    name=IRI_TRUNK ":"
+        "FROM" ":" "@" from_state=[State|IRI_TRUNK]
+        "TO"   ":" "@" to_state=[State|IRI_TRUNK]
 ;
 
 Reaction:
-	name=ID ":"
-		"WHEN"   ":" "@"when=[Event]
-		"DO"     ":" "@"do=[Transition]
-		("FIRES" ":" "@"fires=[Event] ("," "@"fires+=[Event])*)?
+    name=IRI_TRUNK ":"
+        "WHEN" ":" "@" when=[Event|IRI_TRUNK]
+        "DO"   ":" "@" do=[Transition|IRI_TRUNK]
+        ("FIRES" ":" fires+=FiredEvent[","])?
 ;
 
+FiredEvent:
+    "@" event=[Event|IRI_TRUNK]
+;
+
+FQN: IRI_TRUNK+["."];
+Comment: /\/\/.*$/;
+NamespaceDeclare: "ns" name=IRI_TRUNK "=" uri=STRING ;
+IRI_TRUNK: /[^\d\W][\w-]*\b/;

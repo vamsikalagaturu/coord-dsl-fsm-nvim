@@ -12,30 +12,30 @@ module.exports = grammar({
     source_file: ($) =>
       seq(repeat($.namespace_decl), optional($.fsm_definition)),
 
-    comment: (_) =>
-      token(
-        choice(
-          /\/\/.*/,
-          seq("/*", /[^*]*\*+([^/*][^*]*\*+)*/, "/"),
-        ),
-      ),
+    comment: (_) => token(/\/\/.*/),
 
     namespace_decl: ($) =>
       seq("ns", field("name", $.identifier), "=", field("uri", $.string)),
 
+    // FSM (ns=<namespace>) <name> { ... }
     fsm_definition: ($) =>
       seq(
-        "NAME",
-        ":",
-        field("name", $.qualified_name),
+        "FSM",
+        "(",
+        "ns",
+        "=",
+        field("namespace", $.identifier),
+        ")",
+        field("name", $.identifier),
+        "{",
         optional($.description_clause),
         $.states_clause,
         $.start_state_clause,
-        $.current_state_clause,
         $.end_state_clause,
         $.events_clause,
         $.transitions_clause,
         $.reactions_clause,
+        "}",
       ),
 
     description_clause: ($) => seq("DESCRIPTION", ":", $.string),
@@ -43,8 +43,6 @@ module.exports = grammar({
     states_clause: ($) => seq("STATES", ":", $.identifier_list),
 
     start_state_clause: ($) => seq("START_STATE", ":", $.reference),
-
-    current_state_clause: ($) => seq("CURRENT_STATE", ":", $.reference),
 
     end_state_clause: ($) => seq("END_STATE", ":", $.reference),
 
@@ -57,15 +55,6 @@ module.exports = grammar({
 
     identifier_list: ($) =>
       seq($.identifier, repeat(seq(",", $.identifier))),
-
-    // (ns=<namespace>)<local> or just <local>
-    qualified_name: ($) =>
-      seq(
-        optional(
-          seq("(", "ns", "=", field("namespace", $.identifier), ")"),
-        ),
-        field("local", $.identifier),
-      ),
 
     reference: ($) => seq("@", $.identifier),
 

@@ -1,15 +1,16 @@
+; FSM declaration keyword
+"FSM" @keyword
+
 ; Section keywords
-"NAME" @keyword
 "DESCRIPTION" @keyword
 "STATES" @keyword
 "START_STATE" @keyword
-"CURRENT_STATE" @keyword
 "END_STATE" @keyword
 "EVENTS" @keyword
 "TRANSITIONS" @keyword
 "REACTIONS" @keyword
 
-; Clause keywords
+; Clause keywords inside transition/reaction blocks
 "FROM" @keyword
 "TO" @keyword
 "WHEN" @keyword
@@ -18,6 +19,10 @@
 
 ; Namespace keyword
 "ns" @keyword.import
+
+; Braces
+"{" @punctuation.bracket
+"}" @punctuation.bracket
 
 ; Comments
 (comment) @comment
@@ -32,9 +37,9 @@
 ; Namespace declarations
 (namespace_decl name: (identifier) @module)
 
-; FSM qualified name - namespace part (optional)
-(qualified_name namespace: (identifier) @module)
-(qualified_name local: (identifier) @type)
+; FSM namespace reference and name
+(fsm_definition namespace: (identifier) @module)
+(fsm_definition name: (identifier) @type)
 
 ; State declarations
 (states_clause (identifier_list (identifier) @type))

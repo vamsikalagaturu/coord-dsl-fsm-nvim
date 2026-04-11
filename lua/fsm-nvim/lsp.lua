@@ -70,9 +70,6 @@ local function register_server(root, opts)
   end
 
   local cmd = { python, server_script }
-  if opts.grammar_path then
-    vim.list_extend(cmd, { "--grammar-path", opts.grammar_path })
-  end
 
   local server_opts = {
     cmd = cmd,
